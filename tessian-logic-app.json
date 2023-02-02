@@ -1,0 +1,1144 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "actions": {
+            "Check_if_backfill_parameter_is_set_to_true": {
+                "actions": {
+                    "Clear_created_after_string": {
+                        "description": "If the parameter 'backfill' is set to true, we want to get all results available in the API, instead of just the events that have occurred in the last 30 minutes",
+                        "inputs": {
+                            "name": "created_after_url_string",
+                            "value": " "
+                        },
+                        "runAfter": {},
+                        "type": "SetVariable"
+                    }
+                },
+                "expression": {
+                    "and": [
+                        {
+                            "equals": [
+                                "@parameters('Backfill')",
+                                true
+                            ]
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Create_temporary_json_object": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "If"
+            },
+            "Create_additional_results_tracker": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "API additional results available",
+                            "type": "boolean",
+                            "value": true
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "debug_-_create_an_output_variable": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Create_created_after_url_fragment": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "created_after_url_string",
+                            "type": "string",
+                            "value": "&created_after=@{addMinutes(utcNow(),mul(parameters('poll'),-1))}"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Create_default_checkpoint_url_fragment": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Create_default_checkpoint_url_fragment": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "checkpoint_url_string",
+                            "type": "string",
+                            "value": "?"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Create_additional_results_tracker": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Create_temporary_json_object": {
+                "description": "A reusable temporary JSON object. Used in the defender specific switch",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "temp_json",
+                            "type": "object",
+                            "value": {}
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Create_created_after_url_fragment": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Get_token_-_Probably_use_keyvault_here": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "token",
+                            "type": "string",
+                            "value": "1234"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_variable": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Initialize_variable": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "debug_fake_api_response",
+                            "type": "string",
+                            "value": ""
+                        }
+                    ]
+                },
+                "runAfter": {},
+                "type": "InitializeVariable"
+            },
+            "Until": {
+                "actions": {
+                    "Call_API": {
+                        "inputs": {
+                            "headers": {
+                                "Accept": "application/json",
+                                "Authorization": "API-Token @{variables('token')}",
+                                "Content-Type": "application/json"
+                            },
+                            "method": "GET",
+                            "uri": "https://@{parameters('Tenant Address')}/api/v1/events@{variables('checkpoint_url_string')}@{variables('created_after_url_string')}"
+                        },
+                        "runAfter": {},
+                        "type": "Http"
+                    },
+                    "Check_API_Response_code": {
+                        "actions": {
+                            "Create_checkpoint_string_from_checkpoint": {
+                                "inputs": {
+                                    "name": "checkpoint_url_string",
+                                    "value": "?after_checkpoint=@{body('Parse_events_array')?['checkpoint']}"
+                                },
+                                "runAfter": {
+                                    "Set_additional_results": [
+                                        "Succeeded"
+                                    ]
+                                },
+                                "type": "SetVariable"
+                            },
+                            "For_each_API_event": {
+                                "actions": {
+                                    "Get_event_type": {
+                                        "inputs": {
+                                            "content": "@items('For_each_API_event')",
+                                            "schema": {
+                                                "properties": {
+                                                    "type": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "runAfter": {
+                                            "debug_-_print": [
+                                                "Succeeded"
+                                            ]
+                                        },
+                                        "type": "ParseJson"
+                                    },
+                                    "Switch_based_on_module,_create_standard_JSON_event": {
+                                        "cases": {
+                                            "where_type_is_architect": {
+                                                "actions": {
+                                                    "Create_standardised_json_from_architect_event": {
+                                                        "inputs": {
+                                                            "Tenant": "@parameters('Tenant Address')",
+                                                            "email_details": "@body('Parse_item_as_architect_event')?['outbound_email_details']",
+                                                            "event_direction": "outbound",
+                                                            "id": "@body('Parse_item_as_architect_event')?['id']",
+                                                            "module_details": "@body('Parse_item_as_architect_event')?['architect_details']",
+                                                            "tessian_module": "architect",
+                                                            "tessian_portal_link": "@body('Parse_item_as_architect_event')?['portal_link']",
+                                                            "updated_at": "@body('Parse_item_as_architect_event')?['updated_at']"
+                                                        },
+                                                        "runAfter": {
+                                                            "Debug_-_print_architect_event_email_subject_line": [
+                                                                "Succeeded"
+                                                            ]
+                                                        },
+                                                        "type": "Compose"
+                                                    },
+                                                    "Debug_-_print_architect_event_email_subject_line": {
+                                                        "inputs": {
+                                                            "name": "print",
+                                                            "value": "@body('Parse_item_as_architect_event')?['outbound_email_details']?['subject']"
+                                                        },
+                                                        "runAfter": {
+                                                            "Parse_item_as_architect_event": [
+                                                                "Succeeded"
+                                                            ]
+                                                        },
+                                                        "type": "SetVariable"
+                                                    },
+                                                    "Parse_item_as_architect_event": {
+                                                        "inputs": {
+                                                            "content": "@items('For_each_API_event')",
+                                                            "schema": {
+                                                                "properties": {
+                                                                    "architect_details": {
+                                                                        "properties": {
+                                                                            "breach_prevented": {
+                                                                                "type": [
+                                                                                    "boolean",
+                                                                                    "null"
+                                                                                ]
+                                                                            },
+                                                                            "final_outcome": {
+                                                                                "type": [
+                                                                                    "string",
+                                                                                    "null"
+                                                                                ]
+                                                                            },
+                                                                            "is_sensitive": {
+                                                                                "type": "boolean"
+                                                                            },
+                                                                            "justifications": {
+                                                                                "type": "array"
+                                                                            },
+                                                                            "triggered_logic_types": {
+                                                                                "items": {
+                                                                                    "type": "string"
+                                                                                },
+                                                                                "type": "array"
+                                                                            },
+                                                                            "triggered_policy_ids": {
+                                                                                "items": {
+                                                                                    "type": "string"
+                                                                                },
+                                                                                "type": "array"
+                                                                            },
+                                                                            "triggered_policy_names": {
+                                                                                "items": {
+                                                                                    "type": "string"
+                                                                                },
+                                                                                "type": "array"
+                                                                            },
+                                                                            "user_responses": {
+                                                                                "items": {
+                                                                                    "type": "string"
+                                                                                },
+                                                                                "type": "array"
+                                                                            },
+                                                                            "user_shown_message": {
+                                                                                "type": "boolean"
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    },
+                                                                    "created_at": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "id": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "outbound_email_details": {
+                                                                        "properties": {
+                                                                            "attachments": {
+                                                                                "properties": {
+                                                                                    "bytes": {
+                                                                                        "type": "integer"
+                                                                                    },
+                                                                                    "count": {
+                                                                                        "type": "integer"
+                                                                                    },
+                                                                                    "names": {
+                                                                                        "type": "array"
+                                                                                    }
+                                                                                },
+                                                                                "type": "object"
+                                                                            },
+                                                                            "from": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "message_id": {
+                                                                                "type": [
+                                                                                    "string",
+                                                                                    "null"
+                                                                                ]
+                                                                            },
+                                                                            "recipients": {
+                                                                                "properties": {
+                                                                                    "all": {
+                                                                                        "items": {
+                                                                                            "type": "string"
+                                                                                        },
+                                                                                        "type": "array"
+                                                                                    },
+                                                                                    "bcc": {
+                                                                                        "type": "array"
+                                                                                    },
+                                                                                    "cc": {
+                                                                                        "type": "array"
+                                                                                    },
+                                                                                    "count": {
+                                                                                        "type": "integer"
+                                                                                    },
+                                                                                    "to": {
+                                                                                        "items": {
+                                                                                            "type": "string"
+                                                                                        },
+                                                                                        "type": "array"
+                                                                                    }
+                                                                                },
+                                                                                "type": "object"
+                                                                            },
+                                                                            "reply_to": {
+                                                                                "type": "array"
+                                                                            },
+                                                                            "send_time": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "subject": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "tessian_action": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "tessian_id": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "transmitter": {
+                                                                                "type": "string"
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    },
+                                                                    "portal_link": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "type": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "updated_at": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "runAfter": {},
+                                                        "type": "ParseJson"
+                                                    },
+                                                    "Send_Data": {
+                                                        "inputs": {
+                                                            "body": "@{outputs('Create_standardised_json_from_architect_event')}",
+                                                            "headers": {
+                                                                "Log-Type": "tessianTestCustomLog_CL"
+                                                            },
+                                                            "host": {
+                                                                "connection": {
+                                                                    "name": "@parameters('$connections')['azureloganalyticsdatacollector']['connectionId']"
+                                                                }
+                                                            },
+                                                            "method": "post",
+                                                            "path": "/api/logs"
+                                                        },
+                                                        "runAfter": {
+                                                            "Create_standardised_json_from_architect_event": [
+                                                                "Succeeded"
+                                                            ]
+                                                        },
+                                                        "type": "ApiConnection"
+                                                    }
+                                                },
+                                                "case": "architect"
+                                            },
+                                            "where_type_is_defender": {
+                                                "actions": {
+                                                    "Create_a_numeric_version_of_confidence_parameter": {
+                                                        "cases": {
+                                                            "HIGH": {
+                                                                "actions": {
+                                                                    "Create_custom_defender_details_with_numeric_'high'_risk_confidence": {
+                                                                        "inputs": "@addProperty(body('Parse_item_as_defender_event')?['defender_details'],'confidence_int',3)",
+                                                                        "runAfter": {},
+                                                                        "type": "Compose"
+                                                                    },
+                                                                    "Set_variable": {
+                                                                        "inputs": {
+                                                                            "name": "temp_json",
+                                                                            "value": "@outputs('Create_custom_defender_details_with_numeric_''high''_risk_confidence')"
+                                                                        },
+                                                                        "runAfter": {
+                                                                            "Create_custom_defender_details_with_numeric_'high'_risk_confidence": [
+                                                                                "Succeeded"
+                                                                            ]
+                                                                        },
+                                                                        "type": "SetVariable"
+                                                                    }
+                                                                },
+                                                                "case": "HIGH"
+                                                            },
+                                                            "LOW": {
+                                                                "actions": {
+                                                                    "Compose": {
+                                                                        "inputs": "@addProperty(body('Parse_item_as_defender_event')?['defender_details'],'confidence_int',1)",
+                                                                        "runAfter": {},
+                                                                        "type": "Compose"
+                                                                    },
+                                                                    "Set_variable_2": {
+                                                                        "inputs": {
+                                                                            "name": "temp_json",
+                                                                            "value": "@outputs('Compose')"
+                                                                        },
+                                                                        "runAfter": {
+                                                                            "Compose": [
+                                                                                "Succeeded"
+                                                                            ]
+                                                                        },
+                                                                        "type": "SetVariable"
+                                                                    }
+                                                                },
+                                                                "case": "LOW"
+                                                            },
+                                                            "MEDIUM": {
+                                                                "actions": {
+                                                                    "Create_custom_defender_details_with_numeric_'medium'_risk_confidence": {
+                                                                        "inputs": "@addProperty(body('Parse_item_as_defender_event')?['defender_details'],'confidence_int',2)",
+                                                                        "runAfter": {},
+                                                                        "type": "Compose"
+                                                                    },
+                                                                    "Set_variable_3": {
+                                                                        "inputs": {
+                                                                            "name": "temp_json",
+                                                                            "value": "@outputs('Create_custom_defender_details_with_numeric_''medium''_risk_confidence')"
+                                                                        },
+                                                                        "runAfter": {
+                                                                            "Create_custom_defender_details_with_numeric_'medium'_risk_confidence": [
+                                                                                "Succeeded"
+                                                                            ]
+                                                                        },
+                                                                        "type": "SetVariable"
+                                                                    }
+                                                                },
+                                                                "case": "MEDIUM"
+                                                            },
+                                                            "VERY_HIGH": {
+                                                                "actions": {
+                                                                    "Create_custom_defender_details_with_numeric_'very_high'_risk_confidence": {
+                                                                        "inputs": "@addProperty(body('Parse_item_as_defender_event')?['defender_details'],'confidence_int',4)",
+                                                                        "runAfter": {},
+                                                                        "type": "Compose"
+                                                                    },
+                                                                    "Set_variable_4": {
+                                                                        "inputs": {
+                                                                            "name": "temp_json",
+                                                                            "value": "@outputs('Create_custom_defender_details_with_numeric_''very_high''_risk_confidence')"
+                                                                        },
+                                                                        "runAfter": {
+                                                                            "Create_custom_defender_details_with_numeric_'very_high'_risk_confidence": [
+                                                                                "Succeeded"
+                                                                            ]
+                                                                        },
+                                                                        "type": "SetVariable"
+                                                                    }
+                                                                },
+                                                                "case": "VERY_HIGH"
+                                                            }
+                                                        },
+                                                        "default": {
+                                                            "actions": {}
+                                                        },
+                                                        "expression": "@body('Parse_item_as_defender_event')?['defender_details']['confidence']",
+                                                        "runAfter": {
+                                                            "Extract_defender_details_from_current_item": [
+                                                                "Succeeded"
+                                                            ]
+                                                        },
+                                                        "type": "Switch"
+                                                    },
+                                                    "Create_standardised_json_from_defender_event": {
+                                                        "inputs": {
+                                                            "Tenant": "@parameters('Tenant Address')",
+                                                            "email_details": "@body('Parse_item_as_defender_event')?['inbound_email_details']",
+                                                            "event_direction": "inbound",
+                                                            "id": "@body('Parse_item_as_defender_event')?['id']",
+                                                            "module_details": "@variables('temp_json')",
+                                                            "tessian_module": "defender",
+                                                            "tessian_portal_link": "@body('Parse_item_as_defender_event')?['portal_link']",
+                                                            "updated_at": "@body('Parse_item_as_defender_event')?['updated_at']"
+                                                        },
+                                                        "runAfter": {
+                                                            "debug_-_print_temp_json": [
+                                                                "Succeeded"
+                                                            ]
+                                                        },
+                                                        "type": "Compose"
+                                                    },
+                                                    "Debug_-_print_defender_event_email_subject_line": {
+                                                        "inputs": {
+                                                            "name": "print",
+                                                            "value": "@body('Parse_item_as_defender_event')?['inbound_email_details']?['subject']"
+                                                        },
+                                                        "runAfter": {
+                                                            "Parse_item_as_defender_event": [
+                                                                "Succeeded"
+                                                            ]
+                                                        },
+                                                        "type": "SetVariable"
+                                                    },
+                                                    "Extract_defender_details_from_current_item": {
+                                                        "inputs": {
+                                                            "name": "temp_json",
+                                                            "value": "@items('For_each_API_event')['defender_details']"
+                                                        },
+                                                        "runAfter": {
+                                                            "Debug_-_print_defender_event_email_subject_line": [
+                                                                "Succeeded"
+                                                            ]
+                                                        },
+                                                        "type": "SetVariable"
+                                                    },
+                                                    "Parse_item_as_defender_event": {
+                                                        "inputs": {
+                                                            "content": "@items('For_each_API_event')",
+                                                            "schema": {
+                                                                "properties": {
+                                                                    "created_at": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "defender_details": {
+                                                                        "properties": {
+                                                                            "burst_attack_id": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "confidence": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "dkim_result": {
+                                                                                "type": [
+                                                                                    "string",
+                                                                                    "null"
+                                                                                ]
+                                                                            },
+                                                                            "dmarc_result": {
+                                                                                "type": [
+                                                                                    "string",
+                                                                                    "null"
+                                                                                ]
+                                                                            },
+                                                                            "impersonated_address": {},
+                                                                            "impersonated_domain": {},
+                                                                            "impersonation_type": {},
+                                                                            "intent_types": {
+                                                                                "items": {
+                                                                                    "type": "string"
+                                                                                },
+                                                                                "type": "array"
+                                                                            },
+                                                                            "number_protected_users": {
+                                                                                "type": "integer"
+                                                                            },
+                                                                            "sender_location": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "spf_result": {
+                                                                                "type": [
+                                                                                    "string",
+                                                                                    "null"
+                                                                                ]
+                                                                            },
+                                                                            "threat_signal_types": {
+                                                                                "items": {
+                                                                                    "type": "string"
+                                                                                },
+                                                                                "type": "array"
+                                                                            },
+                                                                            "threat_types": {
+                                                                                "items": {
+                                                                                    "type": "string"
+                                                                                },
+                                                                                "type": "array"
+                                                                            },
+                                                                            "users_responded": {
+                                                                                "properties": {
+                                                                                    "deleted": {
+                                                                                        "type": "integer"
+                                                                                    },
+                                                                                    "malicious": {
+                                                                                        "type": "integer"
+                                                                                    },
+                                                                                    "safe": {
+                                                                                        "type": "integer"
+                                                                                    },
+                                                                                    "unsure": {
+                                                                                        "type": "integer"
+                                                                                    }
+                                                                                },
+                                                                                "type": "object"
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    },
+                                                                    "id": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "inbound_email_details": {
+                                                                        "properties": {
+                                                                            "attachments": {
+                                                                                "properties": {
+                                                                                    "bytes": {
+                                                                                        "type": "integer"
+                                                                                    },
+                                                                                    "count": {
+                                                                                        "type": "integer"
+                                                                                    },
+                                                                                    "names": {
+                                                                                        "type": "array"
+                                                                                    }
+                                                                                },
+                                                                                "type": "object"
+                                                                            },
+                                                                            "from": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "message_id": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "received_time": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "recipients": {
+                                                                                "properties": {
+                                                                                    "all": {
+                                                                                        "items": {
+                                                                                            "type": "string"
+                                                                                        },
+                                                                                        "type": "array"
+                                                                                    },
+                                                                                    "bcc": {
+                                                                                        "type": "array"
+                                                                                    },
+                                                                                    "cc": {
+                                                                                        "type": "array"
+                                                                                    },
+                                                                                    "count": {
+                                                                                        "type": "integer"
+                                                                                    },
+                                                                                    "to": {
+                                                                                        "items": {
+                                                                                            "type": "string"
+                                                                                        },
+                                                                                        "type": "array"
+                                                                                    }
+                                                                                },
+                                                                                "type": "object"
+                                                                            },
+                                                                            "reply_to": {
+                                                                                "type": "array"
+                                                                            },
+                                                                            "subject": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "tessian_id": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "transmitter": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "urls": {
+                                                                                "items": {
+                                                                                    "type": "string"
+                                                                                },
+                                                                                "type": "array"
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    },
+                                                                    "portal_link": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "type": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "updated_at": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "runAfter": {},
+                                                        "type": "ParseJson"
+                                                    },
+                                                    "Send_Data_2": {
+                                                        "inputs": {
+                                                            "body": "@{outputs('Create_standardised_json_from_defender_event')}",
+                                                            "headers": {
+                                                                "Log-Type": "tessianTestCustomLog_CL"
+                                                            },
+                                                            "host": {
+                                                                "connection": {
+                                                                    "name": "@parameters('$connections')['azureloganalyticsdatacollector']['connectionId']"
+                                                                }
+                                                            },
+                                                            "method": "post",
+                                                            "path": "/api/logs"
+                                                        },
+                                                        "runAfter": {
+                                                            "Create_standardised_json_from_defender_event": [
+                                                                "Succeeded"
+                                                            ]
+                                                        },
+                                                        "type": "ApiConnection"
+                                                    },
+                                                    "debug_-_print_temp_json": {
+                                                        "inputs": {
+                                                            "name": "print",
+                                                            "value": "@{variables('temp_json')}"
+                                                        },
+                                                        "runAfter": {
+                                                            "Create_a_numeric_version_of_confidence_parameter": [
+                                                                "Succeeded"
+                                                            ]
+                                                        },
+                                                        "type": "SetVariable"
+                                                    }
+                                                },
+                                                "case": "defender"
+                                            },
+                                            "where_type_is_guardian": {
+                                                "actions": {
+                                                    "Create_standardised_json_from_guardian_event": {
+                                                        "inputs": {
+                                                            "Tenant": "@parameters('Tenant Address')",
+                                                            "email_details": "@body('Parse_item_as_guardian_event')?['outbound_email_details']",
+                                                            "event_direction": "outbound",
+                                                            "id": "@body('Parse_item_as_guardian_event')?['id']",
+                                                            "module_details": "@body('Parse_item_as_guardian_event')?['guardian_details']",
+                                                            "tessian_module": "guardian",
+                                                            "tessian_portal_link": "@body('Parse_item_as_guardian_event')?['portal_link']",
+                                                            "updated_at": "@body('Parse_item_as_guardian_event')?['updated_at']"
+                                                        },
+                                                        "runAfter": {
+                                                            "Debug_-_print_guardian_event_email_subject_line": [
+                                                                "Succeeded"
+                                                            ]
+                                                        },
+                                                        "type": "Compose"
+                                                    },
+                                                    "Debug_-_print_guardian_event_email_subject_line": {
+                                                        "inputs": {
+                                                            "name": "print",
+                                                            "value": "@body('Parse_item_as_guardian_event')?['outbound_email_details']?['subject']"
+                                                        },
+                                                        "runAfter": {
+                                                            "Parse_item_as_guardian_event": [
+                                                                "Succeeded"
+                                                            ]
+                                                        },
+                                                        "type": "SetVariable"
+                                                    },
+                                                    "Parse_item_as_guardian_event": {
+                                                        "inputs": {
+                                                            "content": "@items('For_each_API_event')",
+                                                            "schema": {
+                                                                "properties": {
+                                                                    "created_at": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "guardian_details": {
+                                                                        "properties": {
+                                                                            "anomalous_attachments": {
+                                                                                "type": "array"
+                                                                            },
+                                                                            "anomalous_recipients": {
+                                                                                "items": {
+                                                                                    "type": "string"
+                                                                                },
+                                                                                "type": "array"
+                                                                            },
+                                                                            "breach_prevented": {
+                                                                                "type": "boolean"
+                                                                            },
+                                                                            "final_outcome": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "justifications": {
+                                                                                "type": "array"
+                                                                            },
+                                                                            "suggested_recipients": {
+                                                                                "items": {
+                                                                                    "type": "string"
+                                                                                },
+                                                                                "type": "array"
+                                                                            },
+                                                                            "triggered_filter_ids": {
+                                                                                "items": {
+                                                                                    "type": "string"
+                                                                                },
+                                                                                "type": "array"
+                                                                            },
+                                                                            "triggered_filter_names": {
+                                                                                "items": {
+                                                                                    "type": "string"
+                                                                                },
+                                                                                "type": "array"
+                                                                            },
+                                                                            "type": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "user_responses": {
+                                                                                "items": {
+                                                                                    "type": "string"
+                                                                                },
+                                                                                "type": "array"
+                                                                            },
+                                                                            "user_shown_message": {
+                                                                                "type": "boolean"
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    },
+                                                                    "id": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "outbound_email_details": {
+                                                                        "properties": {
+                                                                            "attachments": {
+                                                                                "properties": {
+                                                                                    "bytes": {
+                                                                                        "type": "integer"
+                                                                                    },
+                                                                                    "count": {
+                                                                                        "type": "integer"
+                                                                                    },
+                                                                                    "names": {
+                                                                                        "items": {
+                                                                                            "type": "string"
+                                                                                        },
+                                                                                        "type": "array"
+                                                                                    }
+                                                                                },
+                                                                                "type": "object"
+                                                                            },
+                                                                            "from": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "message_id": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "recipients": {
+                                                                                "properties": {
+                                                                                    "all": {
+                                                                                        "items": {
+                                                                                            "type": "string"
+                                                                                        },
+                                                                                        "type": "array"
+                                                                                    },
+                                                                                    "bcc": {
+                                                                                        "type": "array"
+                                                                                    },
+                                                                                    "cc": {
+                                                                                        "type": "array"
+                                                                                    },
+                                                                                    "count": {
+                                                                                        "type": "integer"
+                                                                                    },
+                                                                                    "to": {
+                                                                                        "items": {
+                                                                                            "type": "string"
+                                                                                        },
+                                                                                        "type": "array"
+                                                                                    }
+                                                                                },
+                                                                                "type": "object"
+                                                                            },
+                                                                            "reply_to": {
+                                                                                "type": "array"
+                                                                            },
+                                                                            "send_time": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "subject": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "tessian_action": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "tessian_id": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "transmitter": {
+                                                                                "type": "string"
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    },
+                                                                    "portal_link": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "type": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "updated_at": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "runAfter": {},
+                                                        "type": "ParseJson"
+                                                    },
+                                                    "Send_Data_3": {
+                                                        "inputs": {
+                                                            "body": "@{outputs('Create_standardised_json_from_guardian_event')}",
+                                                            "headers": {
+                                                                "Log-Type": "tessianTestCustomLog_CL"
+                                                            },
+                                                            "host": {
+                                                                "connection": {
+                                                                    "name": "@parameters('$connections')['azureloganalyticsdatacollector']['connectionId']"
+                                                                }
+                                                            },
+                                                            "method": "post",
+                                                            "path": "/api/logs"
+                                                        },
+                                                        "runAfter": {
+                                                            "Create_standardised_json_from_guardian_event": [
+                                                                "Succeeded"
+                                                            ]
+                                                        },
+                                                        "type": "ApiConnection"
+                                                    }
+                                                },
+                                                "case": "guardian"
+                                            }
+                                        },
+                                        "default": {
+                                            "actions": {}
+                                        },
+                                        "expression": "@body('Get_event_type')?['type']",
+                                        "runAfter": {
+                                            "Get_event_type": [
+                                                "Succeeded"
+                                            ]
+                                        },
+                                        "type": "Switch"
+                                    },
+                                    "debug_-_print": {
+                                        "inputs": {
+                                            "name": "print",
+                                            "value": "@{items('For_each_API_event')}"
+                                        },
+                                        "runAfter": {},
+                                        "type": "SetVariable"
+                                    }
+                                },
+                                "foreach": "@body('Parse_events_array')?['results']",
+                                "runAfter": {
+                                    "Create_checkpoint_string_from_checkpoint": [
+                                        "Succeeded"
+                                    ]
+                                },
+                                "runtimeConfiguration": {
+                                    "concurrency": {
+                                        "repetitions": 1
+                                    }
+                                },
+                                "type": "Foreach"
+                            },
+                            "Parse_events_array": {
+                                "inputs": {
+                                    "content": "@body('Call_API')",
+                                    "schema": {
+                                        "properties": {
+                                            "additional_results": {
+                                                "type": "boolean"
+                                            },
+                                            "checkpoint": {
+                                                "type": "string"
+                                            },
+                                            "results": {
+                                                "items": {
+                                                    "properties": {},
+                                                    "required": [],
+                                                    "type": "object"
+                                                },
+                                                "type": "array"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                },
+                                "runAfter": {},
+                                "type": "ParseJson"
+                            },
+                            "Set_additional_results": {
+                                "inputs": {
+                                    "name": "API additional results available",
+                                    "value": "@body('Parse_events_array')?['additional_results']"
+                                },
+                                "runAfter": {
+                                    "Parse_events_array": [
+                                        "Succeeded"
+                                    ]
+                                },
+                                "type": "SetVariable"
+                            },
+                            "Wait_one_second_before_the_next_API_request": {
+                                "inputs": {
+                                    "interval": {
+                                        "count": 1,
+                                        "unit": "Second"
+                                    }
+                                },
+                                "runAfter": {
+                                    "For_each_API_event": [
+                                        "Succeeded"
+                                    ]
+                                },
+                                "type": "Wait"
+                            }
+                        },
+                        "else": {
+                            "actions": {
+                                "Log_why_we're_quitting": {
+                                    "inputs": {
+                                        "name": "print",
+                                        "value": "Tessian API endpoint returned a non-200 status code. Check your token?"
+                                    },
+                                    "runAfter": {},
+                                    "type": "SetVariable"
+                                }
+                            }
+                        },
+                        "expression": {
+                            "and": [
+                                {
+                                    "equals": [
+                                        "@outputs('Call_API')['statusCode']",
+                                        200
+                                    ]
+                                }
+                            ]
+                        },
+                        "runAfter": {
+                            "Call_API": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "If"
+                    }
+                },
+                "expression": "@equals(variables('API additional results available'), false)",
+                "limit": {
+                    "count": 300,
+                    "timeout": "PT1H"
+                },
+                "runAfter": {
+                    "Check_if_backfill_parameter_is_set_to_true": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Until"
+            },
+            "debug_-_create_an_output_variable": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "print",
+                            "type": "string",
+                            "value": "nothing yet"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Get_token_-_Probably_use_keyvault_here": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            }
+        },
+        "contentVersion": "1.0.0.0",
+        "outputs": {},
+        "parameters": {
+            "$connections": {
+                "defaultValue": {},
+                "type": "Object"
+            },
+            "Backfill": {
+                "defaultValue": false,
+                "type": "Bool"
+            },
+            "Tenant Address": {
+                "defaultValue": "ADDRESS GOES HERE",
+                "type": "String"
+            },
+            "poll": {
+                "defaultValue": 30,
+                "type": "Int"
+            }
+        },
+        "triggers": {
+            "Every_X_minutes": {
+                "evaluatedRecurrence": {
+                    "frequency": "Minute",
+                    "interval": 30
+                },
+                "recurrence": {
+                    "frequency": "Minute",
+                    "interval": "@parameters('poll')"
+                },
+                "type": "Recurrence"
+            }
+        }
+    },
+    "parameters": {
+        "$connections": {
+            "value": {
+                "azureloganalyticsdatacollector": {
+                    "connectionId": "/subscriptions/ea8f6744-5f8e-478c-9611-7aa4f23642aa/resourceGroups/sentinel-test-resource-group/providers/Microsoft.Web/connections/azureloganalyticsdatacollector",
+                    "connectionName": "azureloganalyticsdatacollector",
+                    "id": "/subscriptions/ea8f6744-5f8e-478c-9611-7aa4f23642aa/providers/Microsoft.Web/locations/uksouth/managedApis/azureloganalyticsdatacollector"
+                }
+            }
+        }
+    }
+}
