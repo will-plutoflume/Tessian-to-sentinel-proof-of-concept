@@ -40,3 +40,14 @@ The following files are provided:
 - The resource group name for your sentinel instance.
 - The name of the region your sentinel instance is deployed in
 - Replace the placeholder data in the 'connectionId' and 'id' defintions with the required information
+- Save the logic app definition
+- Switch to 'Logic app designer'
+- Select the 'Get Token' defintion (3rd box down)
+- Enter your Tessian API token **This should be an Azure Keyvault 'get secret', but at the time of writing there is a bug in azure preventing this from working**
+- Select 'Parameters' from the top ribbon
+- Update 'Tenant Address' with your tessian tennant address (no leading https://). I.e. exampletenant.tessian-platform.com
+- Close the parameters menu
+- Save the logic app
+
+Now every 30 minutes, the logic app will top up your sentinel instance with the previous 30 minutes worth of events from the Tessian portal.
+Use the sentinel Analytics and Automations to anaylse this data and automatically create incidents or alerts from it.
