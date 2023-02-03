@@ -367,7 +367,7 @@
                                                         "inputs": {
                                                             "body": "@{outputs('Create_standardised_json_from_architect_event')}",
                                                             "headers": {
-                                                                "Log-Type": "tessianTestCustomLog_CL"
+                                                                "Log-Type": "TessianLog_CL"
                                                             },
                                                             "host": {
                                                                 "connection": {
@@ -709,7 +709,7 @@
                                                         "inputs": {
                                                             "body": "@{outputs('Create_standardised_json_from_defender_event')}",
                                                             "headers": {
-                                                                "Log-Type": "tessianTestCustomLog_CL"
+                                                                "Log-Type": "TessianLog_CL"
                                                             },
                                                             "host": {
                                                                 "connection": {
@@ -929,7 +929,7 @@
                                                         "inputs": {
                                                             "body": "@{outputs('Create_standardised_json_from_guardian_event')}",
                                                             "headers": {
-                                                                "Log-Type": "tessianTestCustomLog_CL"
+                                                                "Log-Type": "TessianLog_CL"
                                                             },
                                                             "host": {
                                                                 "connection": {
@@ -1134,9 +1134,9 @@
         "$connections": {
             "value": {
                 "azureloganalyticsdatacollector": {
-                    "connectionId": "/subscriptions/ea8f6744-5f8e-478c-9611-7aa4f23642aa/resourceGroups/sentinel-test-resource-group/providers/Microsoft.Web/connections/azureloganalyticsdatacollector",
+                    "connectionId": "/subscriptions/SUBSCRIPTION_ID_GOES_HERE/resourceGroups/SENTINEL_RESOURCE_GROUP_GOES_HERE/providers/Microsoft.Web/connections/azureloganalyticsdatacollector",
                     "connectionName": "azureloganalyticsdatacollector",
-                    "id": "/subscriptions/ea8f6744-5f8e-478c-9611-7aa4f23642aa/providers/Microsoft.Web/locations/uksouth/managedApis/azureloganalyticsdatacollector"
+                    "id": "/subscriptions/SUBSCRIPTION_ID_GOES_HERE/providers/Microsoft.Web/locations/REGION_NAME_GOES_HERE/managedApis/azureloganalyticsdatacollector"
                 }
             }
         }
