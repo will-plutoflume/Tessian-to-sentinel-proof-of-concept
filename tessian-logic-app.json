@@ -544,10 +544,16 @@
                                                                     "defender_details": {
                                                                         "properties": {
                                                                             "burst_attack_id": {
-                                                                                "type": "string"
+                                                                                "type": [
+                                                                                    "string",
+                                                                                    "null"
+                                                                                ]
                                                                             },
                                                                             "confidence": {
-                                                                                "type": "string"
+                                                                                "type": [
+                                                                                    "string",
+                                                                                    "null"
+                                                                                ]
                                                                             },
                                                                             "dkim_result": {
                                                                                 "type": [
@@ -566,15 +572,24 @@
                                                                             "impersonation_type": {},
                                                                             "intent_types": {
                                                                                 "items": {
-                                                                                    "type": "string"
+                                                                                    "type": [
+                                                                                        "string",
+                                                                                        "null"
+                                                                                    ]
                                                                                 },
                                                                                 "type": "array"
                                                                             },
                                                                             "number_protected_users": {
-                                                                                "type": "integer"
+                                                                                "type": [
+                                                                                    "integer",
+                                                                                    "null"
+                                                                                ]
                                                                             },
                                                                             "sender_location": {
-                                                                                "type": "string"
+                                                                                "type": [
+                                                                                    "string",
+                                                                                    "null"
+                                                                                ]
                                                                             },
                                                                             "spf_result": {
                                                                                 "type": [
@@ -584,13 +599,19 @@
                                                                             },
                                                                             "threat_signal_types": {
                                                                                 "items": {
-                                                                                    "type": "string"
+                                                                                    "type": [
+                                                                                        "string",
+                                                                                        "null"
+                                                                                    ]
                                                                                 },
                                                                                 "type": "array"
                                                                             },
                                                                             "threat_types": {
                                                                                 "items": {
-                                                                                    "type": "string"
+                                                                                    "type": [
+                                                                                        "string",
+                                                                                        "null"
+                                                                                    ]
                                                                                 },
                                                                                 "type": "array"
                                                                             },
@@ -634,10 +655,16 @@
                                                                                 "type": "object"
                                                                             },
                                                                             "from": {
-                                                                                "type": "string"
+                                                                                "type": [
+                                                                                    "string",
+                                                                                    "null"
+                                                                                ]
                                                                             },
                                                                             "message_id": {
-                                                                                "type": "string"
+                                                                                "type": [
+                                                                                    "string",
+                                                                                    "null"
+                                                                                ]
                                                                             },
                                                                             "received_time": {
                                                                                 "type": "string"
@@ -646,7 +673,10 @@
                                                                                 "properties": {
                                                                                     "all": {
                                                                                         "items": {
-                                                                                            "type": "string"
+                                                                                            "type": [
+                                                                                                "string",
+                                                                                                "null"
+                                                                                            ]
                                                                                         },
                                                                                         "type": "array"
                                                                                     },
@@ -661,7 +691,10 @@
                                                                                     },
                                                                                     "to": {
                                                                                         "items": {
-                                                                                            "type": "string"
+                                                                                            "type": [
+                                                                                                "string",
+                                                                                                "null"
+                                                                                            ]
                                                                                         },
                                                                                         "type": "array"
                                                                                     }
@@ -672,17 +705,29 @@
                                                                                 "type": "array"
                                                                             },
                                                                             "subject": {
-                                                                                "type": "string"
+                                                                                "type": [
+                                                                                    "string",
+                                                                                    "null"
+                                                                                ]
                                                                             },
                                                                             "tessian_id": {
-                                                                                "type": "string"
+                                                                                "type": [
+                                                                                    "string",
+                                                                                    "null"
+                                                                                ]
                                                                             },
                                                                             "transmitter": {
-                                                                                "type": "string"
+                                                                                "type": [
+                                                                                    "string",
+                                                                                    "null"
+                                                                                ]
                                                                             },
                                                                             "urls": {
                                                                                 "items": {
-                                                                                    "type": "string"
+                                                                                    "type": [
+                                                                                        "string",
+                                                                                        "null"
+                                                                                    ]
                                                                                 },
                                                                                 "type": "array"
                                                                             }
@@ -690,13 +735,22 @@
                                                                         "type": "object"
                                                                     },
                                                                     "portal_link": {
-                                                                        "type": "string"
+                                                                        "type": [
+                                                                            "string",
+                                                                            "null"
+                                                                        ]
                                                                     },
                                                                     "type": {
-                                                                        "type": "string"
+                                                                        "type": [
+                                                                            "string",
+                                                                            "null"
+                                                                        ]
                                                                     },
                                                                     "updated_at": {
-                                                                        "type": "string"
+                                                                        "type": [
+                                                                            "string",
+                                                                            "null"
+                                                                        ]
                                                                     }
                                                                 },
                                                                 "type": "object"
@@ -779,7 +833,10 @@
                                                             "schema": {
                                                                 "properties": {
                                                                     "created_at": {
-                                                                        "type": "string"
+                                                                        "type": [
+                                                                            "string",
+                                                                            "null"
+                                                                        ]
                                                                     },
                                                                     "guardian_details": {
                                                                         "properties": {
@@ -788,7 +845,10 @@
                                                                             },
                                                                             "anomalous_recipients": {
                                                                                 "items": {
-                                                                                    "type": "string"
+                                                                                    "type": [
+                                                                                        "string",
+                                                                                        "null"
+                                                                                    ]
                                                                                 },
                                                                                 "type": "array"
                                                                             },
@@ -796,26 +856,38 @@
                                                                                 "type": "boolean"
                                                                             },
                                                                             "final_outcome": {
-                                                                                "type": "string"
+                                                                                "type": [
+                                                                                    "string",
+                                                                                    "null"
+                                                                                ]
                                                                             },
                                                                             "justifications": {
                                                                                 "type": "array"
                                                                             },
                                                                             "suggested_recipients": {
                                                                                 "items": {
-                                                                                    "type": "string"
+                                                                                    "type": [
+                                                                                        "string",
+                                                                                        "null"
+                                                                                    ]
                                                                                 },
                                                                                 "type": "array"
                                                                             },
                                                                             "triggered_filter_ids": {
                                                                                 "items": {
-                                                                                    "type": "string"
+                                                                                    "type": [
+                                                                                        "string",
+                                                                                        "null"
+                                                                                    ]
                                                                                 },
                                                                                 "type": "array"
                                                                             },
                                                                             "triggered_filter_names": {
                                                                                 "items": {
-                                                                                    "type": "string"
+                                                                                    "type": [
+                                                                                        "string",
+                                                                                        "null"
+                                                                                    ]
                                                                                 },
                                                                                 "type": "array"
                                                                             },
@@ -824,7 +896,10 @@
                                                                             },
                                                                             "user_responses": {
                                                                                 "items": {
-                                                                                    "type": "string"
+                                                                                    "type": [
+                                                                                        "string",
+                                                                                        "null"
+                                                                                    ]
                                                                                 },
                                                                                 "type": "array"
                                                                             },
@@ -835,7 +910,10 @@
                                                                         "type": "object"
                                                                     },
                                                                     "id": {
-                                                                        "type": "string"
+                                                                        "type": [
+                                                                            "string",
+                                                                            "null"
+                                                                        ]
                                                                     },
                                                                     "outbound_email_details": {
                                                                         "properties": {
@@ -849,7 +927,10 @@
                                                                                     },
                                                                                     "names": {
                                                                                         "items": {
-                                                                                            "type": "string"
+                                                                                            "type": [
+                                                                                                "string",
+                                                                                                "null"
+                                                                                            ]
                                                                                         },
                                                                                         "type": "array"
                                                                                     }
@@ -857,16 +938,25 @@
                                                                                 "type": "object"
                                                                             },
                                                                             "from": {
-                                                                                "type": "string"
+                                                                                "type": [
+                                                                                    "string",
+                                                                                    "null"
+                                                                                ]
                                                                             },
                                                                             "message_id": {
-                                                                                "type": "string"
+                                                                                "type": [
+                                                                                    "string",
+                                                                                    "null"
+                                                                                ]
                                                                             },
                                                                             "recipients": {
                                                                                 "properties": {
                                                                                     "all": {
                                                                                         "items": {
-                                                                                            "type": "string"
+                                                                                            "type": [
+                                                                                                "string",
+                                                                                                "null"
+                                                                                            ]
                                                                                         },
                                                                                         "type": "array"
                                                                                     },
@@ -881,7 +971,10 @@
                                                                                     },
                                                                                     "to": {
                                                                                         "items": {
-                                                                                            "type": "string"
+                                                                                            "type": [
+                                                                                                "string",
+                                                                                                "null"
+                                                                                            ]
                                                                                         },
                                                                                         "type": "array"
                                                                                     }
@@ -895,16 +988,28 @@
                                                                                 "type": "string"
                                                                             },
                                                                             "subject": {
-                                                                                "type": "string"
+                                                                                "type": [
+                                                                                    "string",
+                                                                                    "null"
+                                                                                ]
                                                                             },
                                                                             "tessian_action": {
-                                                                                "type": "string"
+                                                                                "type": [
+                                                                                    "string",
+                                                                                    "null"
+                                                                                ]
                                                                             },
                                                                             "tessian_id": {
-                                                                                "type": "string"
+                                                                                "type": [
+                                                                                    "string",
+                                                                                    "null"
+                                                                                ]
                                                                             },
                                                                             "transmitter": {
-                                                                                "type": "string"
+                                                                                "type": [
+                                                                                    "string",
+                                                                                    "null"
+                                                                                ]
                                                                             }
                                                                         },
                                                                         "type": "object"
@@ -913,10 +1018,16 @@
                                                                         "type": "string"
                                                                     },
                                                                     "type": {
-                                                                        "type": "string"
+                                                                        "type": [
+                                                                            "string",
+                                                                            "null"
+                                                                        ]
                                                                     },
                                                                     "updated_at": {
-                                                                        "type": "string"
+                                                                        "type": [
+                                                                            "string",
+                                                                            "null"
+                                                                        ]
                                                                     }
                                                                 },
                                                                 "type": "object"
